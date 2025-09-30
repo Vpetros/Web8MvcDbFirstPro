@@ -40,16 +40,47 @@ namespace SchoolApp.Repositories
             return usersWithRoleTeacher;
         }
 
-        public Task<PaginatedResult<User>> GetPaginatedUsersTeachersAsync(int pageNumber, int pageSize)
+        public async Task<PaginatedResult<User>> GetPaginatedUsersTeachersAsync(int pageNumber, int pageSize)
         {
-            throw new NotImplementedException();
+            int skip = (pageNumber - 1) * pageSize;
+
+            var usersWithRolesTeacher = await context.Users
+                .Where(u => u.UserRole == UserRole.Teacher)
+                .Include(u => u.Teacher) // Εager loading της σχετικής οντότητας Teacher
+                .Skip(skip)
+                .Take(pageSize)
+                .ToListAsync();
+
+            int totalRecords = await context.Users
+                .Where(u => u.UserRole == UserRole.Teacher)
+                .CountAsync();
+            return new PaginatedResult<User>(usersWithRolesTeacher, totalRecords, pageNumber, pageSize);
         }
 
   
-        public Task<PaginatedResult<User>> GetPaginatedUsersTeachersFilteredAsync(int pageNumber, int pageSize,
+        public async Task<PaginatedResult<User>> GetPaginatedUsersTeachersFilteredAsync(int pageNumber, int pageSize,
             List<Expression<Func<User, bool>>> predicates)
         {
-            throw new NotImplementedException();
+            IQueryable<User> query = context.Users
+                .Where(u => u.UserRole == UserRole.Teacher)
+                .Include(u => u.Teacher); // Εager loading της σχετικής οντότητας Teacher
+
+            if (predicates != null && predicates.Count > 0)
+            {
+                foreach (var predicate in predicates)
+                {
+                    query = query.Where(predicate); 
+                }
+            }
+
+            int totalRecords = await query.CountAsync();
+            int skip = (pageNumber - 1) * pageSize;
+            var data = await query
+                .OrderBy(u => u.Id) // πάντα χρειάζεται ένα OrderBy πριν το Skip 
+                .Skip(skip)
+                .Take(pageSize)
+                .ToListAsync();
+            return new PaginatedResult<User>(data, totalRecords, pageNumber, pageSize);
         }
 
      
