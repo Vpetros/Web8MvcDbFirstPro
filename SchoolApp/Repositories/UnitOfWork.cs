@@ -13,10 +13,12 @@ namespace SchoolApp.Repositories
 
 
         public UserRepository UserRepository => new(context);
-        
-        public TeacherRepository TeacherRepository => new(context);
+        public StudentRepository StudentRepository => new(context);
 
-        
+        public TeacherRepository TeacherRepository => new(context);
+        public CourseRepository CourseRepository => new(context);
+
+
         public async Task<bool> SaveAsync()
         {
             return await context.SaveChangesAsync() > 0;    // κάνει commit και αυτόματα rollback αν αποτύχει
